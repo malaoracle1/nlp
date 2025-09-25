@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Toxic Comment Classifier</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .card {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        .card h2 {
+            color: #4a5568;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn.danger {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #4a5568;
+        }
+
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 1rem;
+            resize: vertical;
+            min-height: 120px;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .status {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        .status.warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: #e2e8f0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 15px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            width: 0%;
+            transition: width 0.5s ease;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+
+        .result {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 5px solid;
+        }
+
+        .result.toxic {
+            background: #fff5f5;
+            border-color: #f56565;
+            color: #742a2a;
+        }
+
+        .result.non-toxic {
+            background: #f0fff4;
+            border-color: #48bb78;
+            color: #2f855a;
+        }
+
+        .result h3 {
+            margin-bottom: 10px;
+            font-size: 1.2rem;
+        }
+
+        .confidence-bar {
+            width: 100%;
+            height: 10px;
+            background: #e2e8f0;
+            border-radius: 5px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        .confidence-fill {
+            height: 100%;
+            border-radius: 5px;
+            transition: width 0.5s ease;
+        }
+
+        .confidence-fill.toxic {
+            background: linear-gradient(90deg, #ff6b6b, #ee5a24);
+        }
+
+        .confidence-fill.non-toxic {
+            background: linear-gradient(90deg, #51cf66, #40c057);
+        }
+
+        .model-info {
+            grid-column: span 2;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            margin-top: 20px;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .metric-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .metric-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .metric-label {
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .references {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            margin-top: 20px;
+        }
+
+        .references h2 {
+            color: #4a5568;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .reference-item {
+            margin-bottom: 15px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        .reference-item h4 {
+            color: #4a5568;
+            margin-bottom: 5px;
+            font-size: 1rem;
+        }
+
+        .reference-item p {
+            color: #666;
+            font-size: 0.9rem;
+            margin: 0;
+        }
+
+        .reference-item a {
+            color: #667eea;
+            text-decoration: none;
+        }
+
+        .reference-item a:hover {
+            text-decoration: underline;
+        }
+
+        /* Mobile optimizations */
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+
+            .main-content {
+                grid-template-columns: 1fr;
+                gap: 15px;
+                margin-bottom: 20px;
+            }
+
+            .model-info, .references {
+                grid-column: span 1;
+                padding: 20px;
+                margin-top: 15px;
+            }
+
+            .header {
+                margin-bottom: 20px;
+            }
+
+            .header h1 {
+                font-size: 1.8rem;
+                margin-bottom: 8px;
+            }
+
+            .header p {
+                font-size: 1rem;
+            }
+
+            .card {
+                padding: 20px;
+            }
+
+            .card h2 {
+                font-size: 1.3rem;
+                margin-bottom: 15px;
+            }
+
+            .metrics-grid {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+
+            .form-group textarea {
+                min-height: 100px;
+                font-size: 16px; /* Prevents zoom on iOS */
+            }
+
+            .btn {
+                width: 100%;
+                padding: 15px 20px;
+                font-size: 1.1rem;
+                margin-bottom: 10px;
+            }
+
+            .status {
+                padding: 12px;
+                font-size: 0.9rem;
+            }
+
+            .result {
+                padding: 15px;
+            }
+
+            .metric-card {
+                padding: 15px;
+            }
+
+            .metric-value {
+                font-size: 1.5rem;
+            }
+
+            .reference-item {
+                padding: 12px;
+                margin-bottom: 12px;
+            }
+
+            .reference-item h4 {
+                font-size: 0.95rem;
+            }
+
+            .reference-item p {
+                font-size: 0.85rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header h1 {
+                font-size: 1.5rem;
+            }
+
+            .header p {
+                font-size: 0.9rem;
+            }
+
+            .card {
+                padding: 15px;
+            }
+
+            .card h2 {
+                font-size: 1.2rem;
+            }
+
+            .btn {
+                padding: 12px 16px;
+                font-size: 1rem;
+            }
+
+            .metrics-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .model-info, .references {
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🛡️ Toxic Comment Classifier</h1>
+            <p>NLP Class midterm project detect toxic word with naive bayes and lexicon</p>
+        </div>
+
+        <div class="main-content">
+            <!-- Model Training Section -->
+            <div class="card">
+                <h2>🎯 Train Model</h2>
+                <div id="training-status"></div>
+                <div id="training-progress" style="display: none;">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progress-fill"></div>
+                    </div>
+                    <p id="progress-text">Initializing...</p>
+                </div>
+                <button id="train-btn" class="btn" onclick="trainModel()">
+                    <span id="train-btn-text">🚀 Start Training</span>
+                </button>
+                <div id="model-status" style="margin-top: 15px;"></div>
+            </div>
+
+            <!-- Text Testing Section -->
+            <div class="card">
+                <h2>🔍 Test Text</h2>
+                <form id="prediction-form" onsubmit="predictText(event)">
+                    <div class="form-group">
+                        <label for="text-input">Enter text to analyze:</label>
+                        <textarea
+                            id="text-input"
+                            name="text"
+                            placeholder="Type or paste your text here..."
+                            required
+                        ></textarea>
+                    </div>
+                    <button type="submit" class="btn" id="predict-btn">
+                        <span id="predict-btn-text">🔍 Analyze Text</span>
+                    </button>
+                </form>
+
+                <div id="prediction-result"></div>
+            </div>
+        </div>
+
+        <!-- Model Information Section -->
+        <div class="model-info" id="model-info" style="display: none;">
+            <h2>📊 Model Performance</h2>
+            <div id="model-metrics"></div>
+        </div>
+
+        <!-- References Section -->
+        <div class="references">
+            <h2>📚 References</h2>
+
+            <div class="reference-item">
+                <h4>Dataset</h4>
+                <p>Jigsaw Toxic Comment Classification Challenge. (2017). <a href="https://www.kaggle.com/competitions/jigsaw-toxic-comment-classification-challenge" target="_blank">Kaggle Competition Dataset</a>. Contains toxic comment labels including toxic, severe_toxic, obscene, threat, insult, and identity_hate categories.</p>
+            </div>
+
+            <div class="reference-item">
+                <h4>Bad Words Lists</h4>
+                <p>Carnegie Mellon University Bad Words List. <a href="https://www.cs.cmu.edu/~biglou/resources/bad-words.txt" target="_blank">CMU Bad Words Resource</a>. Comprehensive list of profane words for text filtering.</p>
+            </div>
+
+            <div class="reference-item">
+                <h4>English Profanity Dataset</h4>
+                <p>LDNOOBW. (2021). List of Dirty, Naughty, Obscene, and Otherwise Bad Words. <a href="https://github.com/LDNOOBW/List-of-Dirty-Naughty-Obscene-and-Otherwise-Bad-Words" target="_blank">GitHub Repository</a>. Multi-language profanity detection wordlist.</p>
+            </div>
+
+            <div class="reference-item">
+                <h4>Hinglish Profanity Classification</h4>
+                <p>Mathur, P. (2021). Hinglish Offensive Text Classification. <a href="https://github.com/pmathur5k10/Hinglish-Offensive-Text-Classification" target="_blank">GitHub Repository</a>. Research on offensive text detection in Hinglish language.</p>
+            </div>
+
+            <div class="reference-item">
+                <h4>Contractions Dictionary</h4>
+                <p>Andrew Bury. Contractions Dictionary. <a href="https://github.com/andrewbury/contractions" target="_blank">GitHub Repository</a>. JSON mapping of English contractions for text normalization.</p>
+            </div>
+
+            <div class="reference-item">
+                <h4>Natural Language Toolkit (NLTK)</h4>
+                <p>Bird, S., Klein, E., & Loper, E. (2009). Natural Language Processing with Python. O'Reilly Media Inc. <a href="https://nltk.org/" target="_blank">NLTK Official Website</a>. Used for tokenization, lemmatization, and stopword removal.</p>
+            </div>
+
+            <div class="reference-item">
+                <h4>Scikit-learn Machine Learning Library</h4>
+                <p>Pedregosa, F., Varoquaux, G., Gramfort, A., et al. (2011). Scikit-learn: Machine Learning in Python. Journal of Machine Learning Research, 12, 2825-2830. <a href="https://scikit-learn.org/" target="_blank">Scikit-learn Documentation</a>. Used for TF-IDF vectorization and Naive Bayes classification.</p>
+            </div>
+
+            <div class="reference-item">
+                <h4>FastAPI Web Framework</h4>
+                <p>Ramirez, S. (2018). FastAPI: Modern, fast (high-performance) web framework for building APIs with Python 3.7+. <a href="https://fastapi.tiangolo.com/" target="_blank">FastAPI Documentation</a>. Used for creating the web application interface.</p>
+            </div>
+
+            <div class="reference-item">
+                <h4>Research Methodology</h4>
+                <p>Text preprocessing pipeline includes: URL removal, HTML tag cleaning, contraction expansion, tokenization with NLTK, stopword filtering, and lemmatization. Data augmentation performed using curated bad words from multiple sources to improve toxic content detection accuracy.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let isTraining = false;
+        let trainingInterval;
+
+        // Check training status on page load
+        window.onload = function() {
+            checkTrainingStatus();
+            loadModelInfo();
+            checkModelStatus();
+        };
+
+        function trainModel() {
+            if (isTraining) return;
+
+            const trainBtn = document.getElementById('train-btn');
+            const trainBtnText = document.getElementById('train-btn-text');
+            const trainingStatus = document.getElementById('training-status');
+            const trainingProgress = document.getElementById('training-progress');
+
+            trainBtn.disabled = true;
+            trainBtnText.innerHTML = '<div class="spinner"></div>Starting...';
+            trainingProgress.style.display = 'block';
+
+            fetch('/train', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    showTrainingStatus(data.error, 'error');
+                    resetTrainingButton();
+                } else {
+                    showTrainingStatus('Training started successfully!', 'success');
+                    isTraining = true;
+                    startTrainingProgressCheck();
+                }
+            })
+            .catch(error => {
+                showTrainingStatus('Error starting training: ' + error.message, 'error');
+                resetTrainingButton();
+            });
+        }
+
+        function startTrainingProgressCheck() {
+            trainingInterval = setInterval(checkTrainingStatus, 2000);
+        }
+
+        function checkTrainingStatus() {
+            fetch('/training_status')
+            .then(response => response.json())
+            .then(data => {
+                const progressText = document.getElementById('progress-text');
+                const progressFill = document.getElementById('progress-fill');
+
+                if (data.is_training) {
+                    isTraining = true;
+                    document.getElementById('training-progress').style.display = 'block';
+                    progressText.textContent = data.progress;
+                    progressFill.style.width = '50%';
+
+                    const trainBtn = document.getElementById('train-btn');
+                    const trainBtnText = document.getElementById('train-btn-text');
+                    trainBtn.disabled = true;
+                    trainBtnText.innerHTML = '<div class="spinner"></div>Training in Progress...';
+
+                    if (!trainingInterval) {
+                        startTrainingProgressCheck();
+                    }
+                } else if (data.completed) {
+                    isTraining = false;
+                    clearInterval(trainingInterval);
+                    trainingInterval = null;
+
+                    progressFill.style.width = '100%';
+                    showTrainingStatus('Training completed successfully!', 'success');
+                    resetTrainingButton();
+                    loadModelInfo();
+                    checkModelStatus();
+                } else if (data.error) {
+                    isTraining = false;
+                    clearInterval(trainingInterval);
+                    trainingInterval = null;
+
+                    showTrainingStatus('Training failed: ' + data.error, 'error');
+                    resetTrainingButton();
+                }
+            })
+            .catch(error => {
+                console.error('Error checking training status:', error);
+            });
+        }
+
+        function resetTrainingButton() {
+            const trainBtn = document.getElementById('train-btn');
+            const trainBtnText = document.getElementById('train-btn-text');
+            const trainingProgress = document.getElementById('training-progress');
+
+            trainBtn.disabled = false;
+            trainBtnText.innerHTML = '🚀 Start Training';
+            trainingProgress.style.display = 'none';
+        }
+
+        function showTrainingStatus(message, type) {
+            const statusDiv = document.getElementById('training-status');
+            statusDiv.innerHTML = `<div class="status ${type}">${message}</div>`;
+        }
+
+        function predictText(event) {
+            event.preventDefault();
+
+            const textInput = document.getElementById('text-input');
+            const predictBtn = document.getElementById('predict-btn');
+            const predictBtnText = document.getElementById('predict-btn-text');
+            const resultDiv = document.getElementById('prediction-result');
+
+            if (!textInput.value.trim()) {
+                alert('Please enter some text to analyze.');
+                return;
+            }
+
+            predictBtn.disabled = true;
+            predictBtnText.innerHTML = '<div class="spinner"></div>Analyzing...';
+
+            const formData = new FormData();
+            formData.append('text', textInput.value);
+
+            fetch('/predict', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    resultDiv.innerHTML = `<div class="status error">${data.error}</div>`;
+                } else {
+                    const isToxic = data.prediction === 'Toxic';
+                    const confidencePercent = Math.round(data.confidence * 100);
+
+                    resultDiv.innerHTML = `
+                        <div class="result ${isToxic ? 'toxic' : 'non-toxic'}">
+                            <h3>🎯 Result: ${data.prediction}</h3>
+                            <p><strong>Confidence:</strong> ${confidencePercent}%</p>
+                            <div class="confidence-bar">
+                                <div class="confidence-fill ${isToxic ? 'toxic' : 'non-toxic'}"
+                                     style="width: ${confidencePercent}%"></div>
+                            </div>
+                            <p style="margin-top: 10px; font-size: 0.9rem; color: #666;">
+                                <strong>Model:</strong> ${data.model_used}
+                            </p>
+                        </div>
+                    `;
+                }
+            })
+            .catch(error => {
+                resultDiv.innerHTML = `<div class="status error">Error analyzing text: ${error.message}</div>`;
+            })
+            .finally(() => {
+                predictBtn.disabled = false;
+                predictBtnText.innerHTML = '🔍 Analyze Text';
+            });
+        }
+
+        function checkModelStatus() {
+            fetch('/model_info')
+            .then(response => response.json())
+            .then(data => {
+                const modelStatusDiv = document.getElementById('model-status');
+                if (data.error) {
+                    modelStatusDiv.innerHTML = `
+                        <div class="status info">
+                            <strong>📝 Status:</strong> No trained models found. Please train the model first.
+                        </div>
+                    `;
+                } else {
+                    modelStatusDiv.innerHTML = `
+                        <div class="status success">
+                            <strong>✅ Status:</strong> Trained models are available and ready for testing!
+                        </div>
+                    `;
+                }
+            })
+            .catch(error => {
+                const modelStatusDiv = document.getElementById('model-status');
+                modelStatusDiv.innerHTML = `
+                    <div class="status warning">
+                        <strong>⚠️ Status:</strong> Unable to check model status.
+                    </div>
+                `;
+            });
+        }
+
+        function loadModelInfo() {
+            fetch('/model_info')
+            .then(response => response.json())
+            .then(data => {
+                if (!data.error) {
+                    const modelInfoDiv = document.getElementById('model-info');
+                    const modelMetricsDiv = document.getElementById('model-metrics');
+
+                    modelInfoDiv.style.display = 'block';
+
+                    const model1 = data.model_without_bad_words;
+                    const model2 = data.model_with_bad_words;
+                    const dataset = data.dataset_info;
+
+                    modelMetricsDiv.innerHTML = `
+                        <div style="margin-bottom: 25px;">
+                            <h3>📈 Dataset Information</h3>
+                            <div class="metrics-grid">
+                                <div class="metric-card">
+                                    <div class="metric-value">${dataset.total_samples?.toLocaleString() || 'N/A'}</div>
+                                    <div class="metric-label">Total Samples</div>
+                                </div>
+                                <div class="metric-card">
+                                    <div class="metric-value">${dataset.toxic_percentage?.toFixed(1) || 'N/A'}%</div>
+                                    <div class="metric-label">Toxic Comments</div>
+                                </div>
+                                <div class="metric-card">
+                                    <div class="metric-value">${dataset.bad_words_added?.toLocaleString() || 'N/A'}</div>
+                                    <div class="metric-label">Bad Words Added</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style="margin-bottom: 25px;">
+                            <h3>🎯 Model Performance</h3>
+                            <p style="color: #28a745; font-weight: bold; margin-bottom: 15px;">
+                                ✅ Best Model: ${data.better_model} (F1-Score improvement: ${data.f1_improvement?.toFixed(4) || 'N/A'})
+                            </p>
+
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-top: 20px;">
+                                <div>
+                                    <h4 style="margin-bottom: 15px; color: #6c757d;">Without Bad Words Augmentation</h4>
+                                    <div class="metrics-grid">
+                                        <div class="metric-card">
+                                            <div class="metric-value">${model1?.accuracy?.toFixed(3) || 'N/A'}</div>
+                                            <div class="metric-label">Accuracy</div>
+                                        </div>
+                                        <div class="metric-card">
+                                            <div class="metric-value">${model1?.f1_score?.toFixed(3) || 'N/A'}</div>
+                                            <div class="metric-label">F1-Score</div>
+                                        </div>
+                                        <div class="metric-card">
+                                            <div class="metric-value">${model1?.roc_auc?.toFixed(3) || 'N/A'}</div>
+                                            <div class="metric-label">ROC-AUC</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <h4 style="margin-bottom: 15px; color: #28a745;">With Bad Words Augmentation</h4>
+                                    <div class="metrics-grid">
+                                        <div class="metric-card">
+                                            <div class="metric-value">${model2?.accuracy?.toFixed(3) || 'N/A'}</div>
+                                            <div class="metric-label">Accuracy</div>
+                                        </div>
+                                        <div class="metric-card">
+                                            <div class="metric-value">${model2?.f1_score?.toFixed(3) || 'N/A'}</div>
+                                            <div class="metric-label">F1-Score</div>
+                                        </div>
+                                        <div class="metric-card">
+                                            <div class="metric-value">${model2?.roc_auc?.toFixed(3) || 'N/A'}</div>
+                                            <div class="metric-label">ROC-AUC</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+            })
+            .catch(error => {
+                console.error('Error loading model info:', error);
+            });
+        }
+    </script>
+</body>
+</html>
