@@ -81,8 +81,69 @@ class SimpleToxicCommentClassifier:
     def train_simple_model(self):
         """Train a simple model without complex dependencies"""
         try:
-            # Create sample data if train.csv doesn't exist
-            if not os.path.exists("train.csv"):
+            # Load from CSV if it exists
+            if os.path.exists("train.csv"):
+                print("Loading data from train.csv...")
+                texts = []
+                labels = []
+
+                # Simple CSV reading using built-in csv module
+                import csv
+                with open("train.csv", 'r', encoding='utf-8') as f:
+                    csv_reader = csv.DictReader(f)
+
+                    print(f"CSV columns: {csv_reader.fieldnames}")
+
+                    # Find the comment column
+                    comment_col = None
+                    for col in csv_reader.fieldnames:
+                        if 'comment_text' in col.lower():
+                            comment_col = col
+                            break
+
+                    if comment_col is None:
+                        raise ValueError("Could not find comment_text column")
+
+                    # Toxic columns
+                    toxic_cols = ['toxic', 'severe_toxic', 'obscene', 'threat', 'insult', 'identity_hate']
+
+                    row_count = 0
+                    max_rows = 5000  # Process fewer rows for speed and memory
+
+                    for row in csv_reader:
+                        if row_count >= max_rows:
+                            break
+
+                        try:
+                            comment = row.get(comment_col, '').strip()
+                            if len(comment) > 10:  # Skip very short comments
+                                # Check if any toxic column is 1
+                                is_toxic = 0
+                                for toxic_col in toxic_cols:
+                                    if row.get(toxic_col, '0').strip() == '1':
+                                        is_toxic = 1
+                                        break
+
+                                texts.append(comment)
+                                labels.append(is_toxic)
+                                row_count += 1
+
+                                if row_count % 1000 == 0:
+                                    print(f"Processed {row_count} samples...")
+
+                        except Exception as e:
+                            continue  # Skip problematic rows
+
+                print(f"Loaded {len(texts)} samples from CSV")
+
+                # Add bad words to augment data
+                bad_words = self.load_bad_words()
+                bad_words_data = self.create_bad_words_data(bad_words)
+                for word, label in bad_words_data:
+                    texts.append(word)
+                    labels.append(label)
+
+            else:
                 print("Creating sample dataset...")
                 sample_texts = [
                     ("This is a good comment", 0),
@@ -103,9 +164,6 @@ class SimpleToxicCommentClassifier:
                 sample_texts.extend(bad_words_data)
 
                 texts, labels = zip(*sample_texts)
-            else:
-                # Would load from CSV here
-                return {"error": "CSV loading not implemented in simple version"}
 
             print(f"Training with {len(texts)} samples")
 

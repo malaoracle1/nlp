@@ -17,6 +17,15 @@ os.makedirs("models", exist_ok=True)
 # Global classifier instance
 classifier = SimpleToxicCommentClassifier()
 
+# Try to load existing models on startup
+try:
+    if classifier.load_model():
+        print("Pre-trained simple model loaded successfully on startup!")
+    else:
+        print("No pre-trained simple model found. Training required.")
+except Exception as e:
+    print(f"Error loading simple model on startup: {e}")
+
 # Training status
 training_status = {"is_training": False, "progress": "", "completed": False, "error": None}
 
