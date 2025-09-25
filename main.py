@@ -49,7 +49,7 @@ async def run_training():
 
         # Check if train.csv exists
         if not os.path.exists("train.csv"):
-            training_status["error"] = "train.csv not found. Please download the dataset from Kaggle."
+            training_status["error"] = "train.csv not found. Please upload the dataset to train the model."
             training_status["is_training"] = False
             return
 
