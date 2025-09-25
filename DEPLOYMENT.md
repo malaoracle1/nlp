@@ -2,15 +2,17 @@
 
 ## The Error You Encountered
 
-The pandas compilation error with Python 3.13 is a known compatibility issue. Here's how to fix it:
+The setuptools/build system error with complex dependencies. Here's the SIMPLE solution:
 
-## ✅ Solution Files Created
+## ✅ Solution Files Created - SIMPLE VERSION
 
-1. **`.python-version`** - Forces Python 3.11.0
-2. **`runtime.txt`** - Heroku-style Python version specification
-3. **`render.yaml`** - Render configuration
-4. **`Procfile`** - Process file for deployment
-5. **`requirements-deploy.txt`** - Lightweight dependencies
+1. **`.python-version`** - Forces Python 3.10.8 (most stable)
+2. **`runtime.txt`** - Python 3.10.8
+3. **`render.yaml`** - Updated for simple version
+4. **`Procfile`** - Uses main_simple.py
+5. **`requirements-minimal.txt`** - ULTRA lightweight dependencies
+6. **`main_simple.py`** - Simplified FastAPI app
+7. **`model_trainer_simple.py`** - No pandas, no NLTK, no complex deps
 
 ## 🛠️ Render Deployment Steps
 
