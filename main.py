@@ -20,6 +20,15 @@ os.makedirs("models", exist_ok=True)
 # Global classifier instance
 classifier = ToxicCommentClassifier()
 
+# Try to load existing models on startup
+try:
+    if classifier.load_models():
+        print("Pre-trained models loaded successfully on startup!")
+    else:
+        print("No pre-trained models found. Training required.")
+except Exception as e:
+    print(f"Error loading models on startup: {e}")
+
 # Training status
 training_status = {"is_training": False, "progress": "", "completed": False, "error": None}
 
@@ -77,7 +86,9 @@ async def get_training_status():
 async def predict_text(text: str = Form(...)):
     try:
         if not classifier.is_trained():
-            return JSONResponse({"error": "Model not trained yet. Please train the model first."}, status_code=400)
+            # Try to load existing models
+            if not classifier.load_models():
+                return JSONResponse({"error": "Model not trained yet. Please train the model first."}, status_code=400)
 
         prediction = classifier.predict(text)
         return JSONResponse({
@@ -92,7 +103,9 @@ async def predict_text(text: str = Form(...)):
 @app.get("/model_info")
 async def get_model_info():
     if not classifier.is_trained():
-        return JSONResponse({"error": "Model not trained yet"}, status_code=400)
+        # Try to load existing models
+        if not classifier.load_models():
+            return JSONResponse({"error": "Model not trained yet"}, status_code=400)
 
     # Load training results if available
     results_file = "models/training_results.json"
