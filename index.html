@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Toxic Comment Classifier</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <h1>🛡️ Toxic Comment Classifier</h1>
+            <p>AI-powered toxic comment detection using machine learning</p>
+        </header>
+
+        <!-- API Status Section -->
+        <section class="status-section">
+            <div class="status-card">
+                <h2>🔍 API Status</h2>
+                <div id="api-status" class="status-indicator">
+                    <span class="status-dot loading"></span>
+                    <span class="status-text">Checking...</span>
+                </div>
+                <div id="model-status" class="model-status">
+                    <span class="model-indicator">📊 Model Status: <span id="model-text">Loading...</span></span>
+                </div>
+                <button id="refresh-status" class="btn btn-secondary">Refresh Status</button>
+            </div>
+        </section>
+
+        <!-- Model Training Section -->
+        <section class="training-section">
+            <div class="training-card">
+                <h2>🤖 Model Training</h2>
+                <p>Train the toxic comment classification model with your dataset</p>
+
+                <div class="training-options">
+                    <label class="checkbox-container">
+                        <input type="checkbox" id="use-augmentation" checked>
+                        <span class="checkmark"></span>
+                        Use bad word augmentation (recommended)
+                    </label>
+                </div>
+
+                <button id="train-model" class="btn btn-primary">
+                    <span class="btn-text">Train Model</span>
+                    <span class="btn-loader" style="display: none;">Training...</span>
+                </button>
+
+                <div id="training-results" class="training-results" style="display: none;">
+                    <h3>Training Results</h3>
+                    <div id="metrics-display"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Single Prediction Section -->
+        <section class="prediction-section">
+            <div class="prediction-card">
+                <h2>💬 Test Single Comment</h2>
+                <p>Enter a comment to check if it's toxic or not</p>
+
+                <div class="input-group">
+                    <textarea
+                        id="comment-input"
+                        placeholder="Enter your comment here to test..."
+                        rows="4"
+                        maxlength="1000"
+                    ></textarea>
+                    <div class="char-counter">
+                        <span id="char-count">0</span>/1000 characters
+                    </div>
+                </div>
+
+                <button id="predict-single" class="btn btn-success">
+                    <span class="btn-text">Analyze Comment</span>
+                    <span class="btn-loader" style="display: none;">Analyzing...</span>
+                </button>
+
+                <div id="single-result" class="result-card" style="display: none;">
+                    <div class="result-header">
+                        <span class="result-label" id="result-label"></span>
+                        <span class="confidence-badge" id="confidence-badge"></span>
+                    </div>
+                    <div class="result-details">
+                        <div class="probability-bar">
+                            <div class="probability-fill" id="probability-fill"></div>
+                            <span class="probability-text" id="probability-text"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Batch Prediction Section -->
+        <section class="batch-section">
+            <div class="batch-card">
+                <h2>📝 Test Multiple Comments</h2>
+                <p>Enter multiple comments (one per line) to analyze in batch</p>
+
+                <div class="input-group">
+                    <textarea
+                        id="batch-input"
+                        placeholder="Enter multiple comments here (one per line)..."
+                        rows="6"
+                    ></textarea>
+                </div>
+
+                <button id="predict-batch" class="btn btn-info">
+                    <span class="btn-text">Analyze All Comments</span>
+                    <span class="btn-loader" style="display: none;">Analyzing...</span>
+                </button>
+
+                <div id="batch-results" class="batch-results" style="display: none;">
+                    <h3>Batch Analysis Results</h3>
+                    <div id="batch-results-container"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Sample Comments Section -->
+        <section class="samples-section">
+            <div class="samples-card">
+                <h2>📋 Sample Comments</h2>
+                <p>Click any sample to test it quickly</p>
+
+                <div class="samples-grid">
+                    <div class="sample-item safe" data-text="This is a great post! Thanks for sharing.">
+                        <span class="sample-label">Safe</span>
+                        <p>"This is a great post! Thanks for sharing."</p>
+                    </div>
+                    <div class="sample-item safe" data-text="I really appreciate your hard work on this project.">
+                        <span class="sample-label">Safe</span>
+                        <p>"I really appreciate your hard work on this project."</p>
+                    </div>
+                    <div class="sample-item questionable" data-text="This is terrible and I hate it.">
+                        <span class="sample-label">Questionable</span>
+                        <p>"This is terrible and I hate it."</p>
+                    </div>
+                    <div class="sample-item questionable" data-text="You people are so annoying and stupid.">
+                        <span class="sample-label">Questionable</span>
+                        <p>"You people are so annoying and stupid."</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>🔬 Built with FastAPI, scikit-learn, and NLTK | NLP Class Project</p>
+        </footer>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast"></div>
+
+    <script src="/static/script.js"></script>
+</body>
+</html>
