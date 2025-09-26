@@ -1,32 +1,13 @@
 {
   "training_completed": true,
   "dataset_info": {
-    "total_samples": 159571,
-    "toxic_samples": 16225,
-    "toxic_percentage": 10.167887648758233,
-    "training_samples": 127656,
-    "augmented_training_samples": 129391,
-    "test_samples": 31915,
-    "bad_words_added": 1735
+    "total_samples": 5012,
+    "training_samples": 4009,
+    "test_samples": 1003
   },
-  "model_without_bad_words": {
-    "accuracy": 0.9423781920726931,
-    "f1_score": 0.6174329103390889,
-    "roc_auc": 0.9051771096957407,
-    "tp": 1484,
-    "tn": 28592,
-    "fp": 78,
-    "fn": 1761
+  "model_performance": {
+    "accuracy": 0.8993020937188435,
+    "f1_score": 0.867911356662341
   },
-  "model_with_bad_words": {
-    "accuracy": 0.9436628544571518,
-    "f1_score": 0.6320098239869013,
-    "roc_auc": 0.9047154297642319,
-    "tp": 1544,
-    "tn": 28573,
-    "fp": 97,
-    "fn": 1701
-  },
-  "better_model": "With Bad Words",
-  "f1_improvement": 0.01457691364781244
+  "model_type": "Simple Naive Bayes"
 }
