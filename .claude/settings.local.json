@@ -5,7 +5,8 @@
       "Bash(tasklist)",
       "Bash(findstr:*)",
       "Bash(curl:*)",
-      "Bash(pip install:*)"
+      "Bash(pip install:*)",
+      "Bash(rm:*)"
     ],
     "deny": [],
     "ask": []

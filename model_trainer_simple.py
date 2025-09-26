@@ -241,3 +241,11 @@ class SimpleToxicCommentClassifier:
             return True
         except FileNotFoundError:
             return False
+        except (ModuleNotFoundError, ImportError, AttributeError) as e:
+            print(f"Model incompatible with current environment: {e}")
+            print("Removing incompatible model file...")
+            try:
+                os.remove('models/simple_model.pkl')
+            except:
+                pass
+            return False
