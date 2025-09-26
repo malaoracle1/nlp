@@ -32,18 +32,38 @@ class ToxicCommentClassifier:
     def _initialize_nltk(self):
         """Download required NLTK data and initialize components"""
         try:
-            nltk.download('punkt', quiet=True)
-            nltk.download('punkt_tab', quiet=True)
-            nltk.download('stopwords', quiet=True)
-            nltk.download('wordnet', quiet=True)
-            nltk.download('omw-1.4', quiet=True)
+            # Set NLTK data path for deployment environments like Render
+            import os
+            nltk_data_paths = [
+                '/opt/render/nltk_data',  # Render
+                '/app/nltk_data',         # Heroku
+                './nltk_data',            # Local
+            ]
+
+            for path in nltk_data_paths:
+                if os.path.exists(path):
+                    nltk.data.path.insert(0, path)
+                    break
+
+            # Try to download if not available
+            try:
+                nltk.download('punkt', quiet=True)
+                nltk.download('punkt_tab', quiet=True)
+                nltk.download('stopwords', quiet=True)
+                nltk.download('wordnet', quiet=True)
+                nltk.download('omw-1.4', quiet=True)
+            except Exception as download_error:
+                logger.warning(f"NLTK download failed: {download_error}")
 
             self.lemmatizer = WordNetLemmatizer()
             self.stop_words = set(stopwords.words('english'))
             logger.info("NLTK components initialized successfully")
         except Exception as e:
             logger.error(f"Error initializing NLTK: {e}")
-            raise
+            # Don't raise here - try to continue without NLTK preprocessing
+            self.lemmatizer = None
+            self.stop_words = set()
+            logger.warning("Continuing without NLTK preprocessing")
 
     def _load_contractions(self):
         """Load contractions dictionary"""
@@ -90,13 +110,25 @@ class ToxicCommentClassifier:
 
     def tokenize_and_lemmatize(self, text: str) -> str:
         """Tokenize and lemmatize text"""
-        tokens = word_tokenize(text)
-        # Remove stop words
-        tokens = [t for t in tokens if t not in self.stop_words and t.isalpha()]
-        # Lemmatize
-        lem = [self.lemmatizer.lemmatize(t) for t in tokens]
+        if self.lemmatizer is None:
+            # Fallback: simple tokenization without lemmatization
+            tokens = text.split()
+            tokens = [t for t in tokens if t.isalpha() and len(t) > 2]
+            return " ".join(tokens)
 
-        return " ".join(lem)
+        try:
+            tokens = word_tokenize(text)
+            # Remove stop words
+            tokens = [t for t in tokens if t not in self.stop_words and t.isalpha()]
+            # Lemmatize
+            lem = [self.lemmatizer.lemmatize(t) for t in tokens]
+            return " ".join(lem)
+        except Exception as e:
+            logger.warning(f"Error in tokenization/lemmatization: {e}")
+            # Fallback to simple processing
+            tokens = text.split()
+            tokens = [t for t in tokens if t.isalpha() and len(t) > 2]
+            return " ".join(tokens)
 
     def load_bad_words(self) -> List[str]:
         """Load bad words from various sources"""
