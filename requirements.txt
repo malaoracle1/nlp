@@ -1,0 +1,9 @@
+fastapi==0.115.5
+uvicorn==0.32.1
+numpy==1.26.4
+pandas==2.2.3
+requests==2.32.3
+scikit-learn==1.5.2
+datasets==3.1.0
+nltk==3.9.1
+python-multipart==0.0.20
