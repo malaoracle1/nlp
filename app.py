@@ -36,6 +36,10 @@ model_status = {
 }
 model_lock = threading.Lock()
 
+# Model storage directory
+MODEL_DIR = "saved_models"
+os.makedirs(MODEL_DIR, exist_ok=True)
+
 # Authentication
 USERNAME = "admin"
 PASSWORD = "admin123"
@@ -160,6 +164,40 @@ def build_combined_vocab(train_texts, bad_words_list, lemmatizer, stop_words, ma
     combined_vocab = top_vocab.union(bad_vocab)
     return list(combined_vocab)
 
+def save_models():
+    """Save all trained models to disk"""
+    for model_key, model_data in models.items():
+        model_path = os.path.join(MODEL_DIR, f"{model_key}.pkl")
+        with open(model_path, 'wb') as f:
+            pickle.dump(model_data, f)
+    print(f"Models saved to {MODEL_DIR} directory")
+
+def load_models():
+    """Load models from disk if they exist"""
+    global models, model_status
+
+    model_files = ['model_1.pkl', 'model_2.pkl', 'model_3.pkl', 'model_4.pkl']
+    all_exist = all(os.path.exists(os.path.join(MODEL_DIR, f)) for f in model_files)
+
+    if not all_exist:
+        return False
+
+    try:
+        for model_file in model_files:
+            model_key = model_file.replace('.pkl', '')
+            model_path = os.path.join(MODEL_DIR, model_file)
+            with open(model_path, 'rb') as f:
+                models[model_key] = pickle.load(f)
+
+        with model_lock:
+            model_status["status"] = "ready"
+            model_status["message"] = "Models loaded from disk"
+        print("Models loaded successfully from disk")
+        return True
+    except Exception as e:
+        print(f"Error loading models: {e}")
+        return False
+
 def train_models_background():
     global models, model_status
 
@@ -278,9 +316,12 @@ def train_models_background():
             'stop_words': stop_words
         }
 
+        # Save models to disk
+        save_models()
+
         with model_lock:
             model_status["status"] = "ready"
-            model_status["message"] = "All 4 models trained successfully"
+            model_status["message"] = "All 4 models trained and saved successfully"
 
     except Exception as e:
         with model_lock:
@@ -574,6 +615,11 @@ async def test_text(request: TestRequest):
         }
 
     return TestResponse(results=results)
+
+@app.on_event("startup")
+async def startup_event():
+    """Load models on startup if they exist"""
+    load_models()
 
 if __name__ == "__main__":
     import uvicorn
